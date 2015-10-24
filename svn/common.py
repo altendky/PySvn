@@ -190,22 +190,24 @@ class CommonClient(object):
 
         result = self.run_command(
                     'log', 
-                    args + ['--xml', full_url_or_path], 
+                    args + ['--xml','-v', full_url_or_path],
                     combine=True)
 
         root = xml.etree.ElementTree.fromstring(result)
         c = collections.namedtuple(
                 'LogEntry', 
-                ['date', 'msg', 'revision', 'author'])
+                ['date', 'msg', 'revision', 'author', 'paths'])
         
         for e in root.findall('logentry'):
             entry_info = {x.tag: x.text for x in e.getchildren()}
+            paths = {p.text: p.attrib for p in e.findall('paths')[0].getchildren()}
 
             yield c(
                 msg=entry_info['msg'],
                 author=entry_info['author'],
                 revision=int(e.get('revision')),
-                date=dateutil.parser.parse(entry_info['date']))
+                date=dateutil.parser.parse(entry_info['date']),
+                paths=paths)
 
 
     def export(self, to_path, revision=None):
